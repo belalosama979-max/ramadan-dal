@@ -47,8 +47,8 @@ export const QuestionService = {
       .insert([{
           text: questionData.text,
           correct_answer: questionData.correctAnswer,
-          start_time: questionData.startTime,
-          end_time: questionData.endTime,
+          start_time: new Date(questionData.startTime).toISOString(),
+          end_time: new Date(questionData.endTime).toISOString(),
           // id and created_at handled by DB defaults
       }])
       .select()
@@ -68,27 +68,31 @@ export const QuestionService = {
   getActive: async () => {
     const now = new Date().toISOString();
     
-    // Fetch questions that started before NOW and end after NOW
     const { data, error } = await supabase
         .from('questions')
         .select('*')
         .lte('start_time', now)
         .gte('end_time', now)
-        .maybeSingle(); // Expecting one active question at a time
+        .order('start_time', { ascending: false })
+        .limit(1);
 
     if (error) {
         console.error("Error fetching active question:", error);
-        return null;
+        throw error; // Changed from returning null to match requirements
     }
     
-    if (!data) return null;
+    console.log("Active question fetched:", data); // Temporary debug log
+
+    if (!data || data.length === 0) return null;
+    
+    const activeQ = data[0];
 
     return {
-        ...data,
-        correctAnswer: data.correct_answer,
-        startTime: data.start_time,
-        endTime: data.end_time,
-        createdAt: data.created_at
+        ...activeQ,
+        correctAnswer: activeQ.correct_answer,
+        startTime: activeQ.start_time,
+        endTime: activeQ.end_time,
+        createdAt: activeQ.created_at
     };
   },
 
