@@ -1,0 +1,75 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 168 35% 18%;
+    --foreground: 38 35% 88%;
+
+    --card: 168 30% 22%;
+    --card-foreground: 38 35% 88%;
+
+    --popover: 168 30% 22%;
+    --popover-foreground: 38 35% 88%;
+
+    --primary: 38 35% 78%;
+    --primary-foreground: 168 35% 15%;
+
+    --secondary: 168 30% 28%;
+    --secondary-foreground: 38 35% 88%;
+
+    --muted: 168 25% 25%;
+    --muted-foreground: 168 15% 58%;
+
+    --accent: 168 35% 35%;
+    --accent-foreground: 38 35% 92%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 168 25% 30%;
+    --input: 168 25% 26%;
+    --ring: 38 35% 78%;
+
+    --radius: 0.75rem;
+
+    --gold: 38 35% 78%;
+    --gold-light: 38 45% 85%;
+    --green-dark: 168 35% 18%;
+    --green-mid: 168 30% 28%;
+    --green-light: 168 35% 35%;
+
+    --sidebar-background: 168 30% 20%;
+    --sidebar-foreground: 38 35% 88%;
+    --sidebar-primary: 38 35% 78%;
+    --sidebar-primary-foreground: 168 35% 15%;
+    --sidebar-accent: 168 28% 26%;
+    --sidebar-accent-foreground: 38 35% 88%;
+    --sidebar-border: 168 25% 28%;
+    --sidebar-ring: 38 35% 78%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-cairo;
+    direction: rtl;
+  }
+}
+
+@layer utilities {
+  .text-gold-glow {
+    text-shadow: 0 0 20px hsl(38 35% 78% / 0.3), 0 0 40px hsl(38 35% 78% / 0.1);
+  }
+
+  .gold-border-glow {
+    box-shadow: 0 0 15px hsl(38 35% 78% / 0.15), inset 0 1px 0 hsl(38 35% 78% / 0.1);
+  }
+}
