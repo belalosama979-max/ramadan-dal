@@ -1,15 +1,18 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useGame } from '../context/GameContext';
 
 const Layout = ({ children }) => {
   const { user, logout } = useGame();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
       logout();
       navigate('/name');
   };
+
+  const isAdminPage = location.pathname.startsWith('/admin');
   return (
     <div className="min-h-screen relative overflow-hidden font-arabic flex flex-col bg-gradient-to-br from-[#0F3D2E] to-[#14532D]">
       
@@ -34,8 +37,8 @@ const Layout = ({ children }) => {
             </div>
         </Link>
         
-        {/* Logout Button */}
-        {user && (
+        {/* Logout Button (Hidden on Admin Pages) */}
+        {user && !isAdminPage && (
             <button 
                 onClick={handleLogout}
                 className="text-white/80 hover:text-white px-4 py-2 rounded-lg hover:bg-white/10 transition text-sm font-medium"
