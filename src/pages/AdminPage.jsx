@@ -136,13 +136,13 @@ const AdminPage = () => {
     return (
         <div className="w-full max-w-7xl animate-fade-in pb-16 px-4">
             <div className="flex justify-between items-center border-b border-primary/10 pb-6 mb-10">
-                <h1 className="text-4xl font-bold text-primary-dark">لوحة التحكم</h1>
+                <h1 className="text-5xl font-extrabold text-white drop-shadow-lg tracking-tight shadow-black/10">لوحة التحكم</h1>
                 <button 
                     onClick={() => {
                         setIsAuthenticated(false);
                         sessionStorage.removeItem('dal_admin_auth');
                     }}
-                    className="text-red-500 hover:text-red-700 font-medium text-sm bg-red-50 px-4 py-2 rounded-lg hover:bg-red-100 transition"
+                    className="text-red-100 hover:text-white font-bold text-sm bg-red-500/20 px-6 py-3 rounded-xl hover:bg-red-500/40 transition border border-red-500/20 backdrop-blur-sm"
                 >
                     تسجيل الخروج
                 </button>

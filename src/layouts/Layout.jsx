@@ -25,15 +25,12 @@ const Layout = ({ children }) => {
 
       {/* Header */}
       <header className="relative z-10 w-full py-6 px-8 flex justify-between items-center bg-white/5 backdrop-blur-md shadow-sm border-b border-white/10">
-        <Link to="/" className="flex items-center gap-5 group">
-            <img 
-                src="/dal-logo.png" 
-                alt="Dal Club Logo" 
-                className="h-16 w-auto transition-transform group-hover:scale-105 duration-300 drop-shadow-md"
-            />
-            <div className="flex flex-col">
-                <span className="font-extrabold text-3xl text-white tracking-wide drop-shadow-sm">نادي دال</span>
-                <span className="text-sm text-white/80 font-medium tracking-wider">بداية ... لكل ريادة</span>
+           <Link to="/">
+            <div className="flex items-center gap-4 group">
+                <div className="bg-white/10 p-2 rounded-xl backdrop-blur-sm group-hover:bg-white/20 transition-all">
+                    <img src="/dal-logo.png" alt="Dal Logo" className="w-10 h-10 object-contain drop-shadow-md" />
+                </div>
+                <h1 className="text-2xl font-bold text-white drop-shadow-md tracking-wide">رمضان دال</h1>
             </div>
         </Link>
         
