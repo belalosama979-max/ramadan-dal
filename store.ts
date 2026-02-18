@@ -1,4 +1,4 @@
-// Mock database store for Ramadan Dal quiz
+// Mock database store for Ramadan Al-Rijal quiz
 
 export interface Question {
   id: string;

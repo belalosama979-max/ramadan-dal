@@ -18,13 +18,13 @@ const Home = () => {
         {/* Crescent decoration */}
         <img
            src={dalLogo}
-           alt="شعار نادي دال"
+           alt="شعار نادي الرجال"
            className="w-36 h-36 object-contain animate-glow-pulse mb-2 rounded-2xl"
          />
 
         {/* Title */}
         <h1 className="text-5xl md:text-7xl font-black text-primary text-gold-glow">
-          رمضان دال
+          رمضان الرجال
         </h1>
 
         <p className="text-xl md:text-2xl font-semibold text-accent-foreground/80">
@@ -32,7 +32,7 @@ const Home = () => {
         </p>
 
         <p className="text-muted-foreground text-sm max-w-md">
-          نادي دال يقدم لكم تحدي رمضاني يومي — أجب بسرعة وصحة لتكون فائز اليوم!
+          نادي الرجال يقدم لكم تحدي رمضاني يومي — أجب بسرعة وصحة لتكون فائز اليوم!
         </p>
 
         {/* CTA Button */}
@@ -47,7 +47,7 @@ const Home = () => {
 
         {/* Footer badge */}
         <p className="mt-12 text-muted-foreground text-xs">
-          نادي دال — جامعة الحسين التقنية
+          نادي الرجال — جامعة الحسين التقنية
         </p>
       </div>
     </div>

@@ -22,7 +22,7 @@ const LandingPage = () => {
       </h1>
       
       <p className="text-2xl md:text-3xl text-white/90 font-medium max-w-2xl leading-relaxed drop-shadow-sm">
-        شاركنا المعرفة واربح معنا في مسابقات نادي دال الرمضانية
+        شاركنا المعرفة واربح معنا في مسابقات نادي الرجال الرمضانية
       </p>
 
       {/* Call to Action */}

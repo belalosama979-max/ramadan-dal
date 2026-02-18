@@ -23,9 +23,9 @@ const Layout = ({ children }) => {
            <Link to="/">
             <div className="flex items-center gap-4 group">
                 <div className="bg-white/10 p-2 rounded-xl backdrop-blur-sm group-hover:bg-white/20 transition-all">
-                    <img src="/dal-logo.png" alt="Dal Logo" className="w-10 h-10 object-contain drop-shadow-md" />
+                    <img src="/dal-logo.png" alt="Al-Rijal Club Logo" className="w-10 h-10 object-contain drop-shadow-md" />
                 </div>
-                <h1 className="text-2xl font-bold text-white drop-shadow-md tracking-wide">رمضان دال</h1>
+                <h1 className="text-2xl font-bold text-white drop-shadow-md tracking-wide">رمضان الرجال</h1>
             </div>
         </Link>
         
@@ -48,7 +48,7 @@ const Layout = ({ children }) => {
 
       {/* Footer */}
       <footer className="relative z-10 py-10 text-center text-white/40 text-sm font-medium border-t border-white/5 mt-auto">
-        <p>© {new Date().getFullYear()} نادي دال - جميع الحقوق محفوظة</p>
+        <p>© {new Date().getFullYear()} نادي الرجال - جميع الحقوق محفوظة</p>
       </footer>
     </div>
   );
