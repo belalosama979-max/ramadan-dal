@@ -16,15 +16,7 @@ const Layout = ({ children }) => {
   return (
     <div className="min-h-screen relative overflow-hidden font-arabic flex flex-col bg-gradient-to-br from-[#0F3D2E] to-[#14532D]">
       
-      {/* Background Pattern */}
-      <div 
-        className="absolute inset-0 z-0 opacity-[0.02] pointer-events-none mix-blend-overlay"
-        style={{
-            backgroundImage: "url('/islamic-pattern.png')",
-            backgroundSize: '400px',
-            backgroundRepeat: 'repeat'
-        }}
-      ></div>
+
 
       {/* Header */}
       <header className="relative z-10 w-full py-6 px-8 flex justify-between items-center bg-white/5 backdrop-blur-md shadow-sm border-b border-white/10">

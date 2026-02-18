@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useGame } from '../context/GameContext';
 import { SubmissionService } from '../services/submissionService';
 import { QuestionService } from '../services/questionService';
-import islamicPattern from '/public/islamic-pattern.png';
 
 // --- DYNAMIC MESSAGES ---
 const MESSAGES = {
@@ -24,7 +23,7 @@ const MESSAGES = {
     ended: [
         "انتهى الوقت… نلتقي في الجولة القادمة 🏁",
         "يلا بطلع منك 😎",
-        "اللي سبقك سبقك ⚡",
+        "اللي سبق لبق...",
         "حاول أسرع المرة الجاية 😉",
         "خيرها بغيرها 👋"
     ]
@@ -282,8 +281,11 @@ const QuestionPage = () => {
             <div className={`bg-white rounded-3xl shadow-xl shadow-primary/5 overflow-hidden border border-primary/10 transition-all duration-500 ease-out ${isRevealing ? 'scale-95 shadow-2xl' : 'scale-100'}`}>
                 
                 {/* Header */}
-                <div className="bg-gradient-to-r from-primary to-primary-dark p-8 text-white text-center relative overflow-hidden">
-                    <div className="absolute inset-0 opacity-10" style={{ backgroundImage: `url(${islamicPattern})`, backgroundSize: "300px" }}></div>
+                <div 
+                    className="p-8 text-white text-center relative overflow-hidden"
+                    style={{ background: 'radial-gradient(circle at top right, #14532D, #052E1B)' }}
+                >
+                    <div className="absolute inset-0 opacity-10"></div>
                     
                     {/* Active Timer Badge */}
                     <div className={`inline-flex items-center gap-2 px-4 py-1 rounded-full mb-4 text-sm font-bold tracking-wider ${isEnded ? 'bg-red-500/20 text-red-100' : 'bg-white/20 text-yellow-300'}`}>
