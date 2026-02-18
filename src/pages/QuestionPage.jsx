@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useGame } from '../context/GameContext';
 import { SubmissionService } from '../services/submissionService';
 import { QuestionService } from '../services/questionService';
-// Assuming asset exists based on previous code
+import islamicPattern from '../assets/islamic-pattern.png';
 
 // --- DYNAMIC MESSAGES ---
 const MESSAGES = {
