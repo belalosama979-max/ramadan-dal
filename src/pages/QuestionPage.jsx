@@ -119,14 +119,41 @@ const QuestionPage = () => {
                     <form onSubmit={handleSubmit} className="space-y-8">
                         <div>
                             <label className="block text-primary-dark font-bold text-lg mb-4">إجابتك:</label>
-                            <textarea
-                                className="w-full p-5 rounded-2xl border-2 border-gray-100 bg-gray-50 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all duration-300 text-lg resize-none shadow-inner"
-                                rows="4"
-                                placeholder="اكتب الإجابة هنا..."
-                                value={answer}
-                                onChange={(e) => setAnswer(e.target.value)}
-                                disabled={status === 'submitting'}
-                            ></textarea>
+                            
+                            {activeQuestion.type === 'multiple_choice' && activeQuestion.options ? (
+                                <div className="space-y-3">
+                                    {activeQuestion.options.map((option, idx) => (
+                                        <label 
+                                            key={idx} 
+                                            className={`flex items-center gap-4 p-4 rounded-xl border-2 transition-all cursor-pointer ${
+                                                answer === option 
+                                                    ? 'border-primary bg-primary/5 shadow-md' 
+                                                    : 'border-gray-100 hover:border-primary/30 hover:bg-gray-50'
+                                            }`}
+                                        >
+                                            <input
+                                                type="radio"
+                                                name="mcq-answer"
+                                                value={option}
+                                                checked={answer === option}
+                                                onChange={(e) => setAnswer(e.target.value)}
+                                                className="w-5 h-5 text-primary focus:ring-primary/50 accent-primary"
+                                                disabled={status === 'submitting'}
+                                            />
+                                            <span className="text-lg font-medium text-gray-800">{option}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            ) : (
+                                <textarea
+                                    className="w-full p-5 rounded-2xl border-2 border-gray-100 bg-gray-50 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all duration-300 text-lg resize-none shadow-inner"
+                                    rows="4"
+                                    placeholder="اكتب الإجابة هنا..."
+                                    value={answer}
+                                    onChange={(e) => setAnswer(e.target.value)}
+                                    disabled={status === 'submitting'}
+                                ></textarea>
+                            )}
                         </div>
 
                         {status === 'error' && (

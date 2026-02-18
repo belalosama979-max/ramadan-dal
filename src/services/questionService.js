@@ -26,6 +26,8 @@ export const QuestionService = {
     return data.map(q => ({
       id: q.id,
       text: q.text,
+      type: q.type || 'text',
+      options: q.options || null,
       correctAnswer: q.correct_answer,
       startTime: q.start_time,
       endTime: q.end_time,
@@ -50,10 +52,46 @@ export const QuestionService = {
       throw new Error("End time must be after start time.");
     }
 
+    // Default to 'text' if not specified
+    const type = questionData.type || 'text';
+    let options = null;
+
+    // Strict Validation for MCQ
+    if (type === 'multiple_choice') {
+      if (!Array.isArray(questionData.options) || questionData.options.length < 2) {
+        throw new Error("Multiple choice questions must have at least 2 options.");
+      }
+
+      // Cleanup options (trim, remove empty)
+      options = questionData.options
+        .map(o => o.trim())
+        .filter(o => o.length > 0);
+
+      if (options.length < 2) {
+        throw new Error("Multiple choice questions must have at least 2 valid options.");
+      }
+
+      // Check for duplicates
+      const uniqueOptions = new Set(options);
+      if (uniqueOptions.size !== options.length) {
+        throw new Error("Options must be unique.");
+      }
+
+      // Validate correct answer is in options
+      if (!options.includes(questionData.correctAnswer)) {
+        throw new Error("Correct answer must be one of the provided options.");
+      }
+    } else {
+      // For text questions, force options to null
+      options = null;
+    }
+
     const { data, error } = await supabase
       .from('questions')
       .insert([{
         text: questionData.text,
+        type: type,
+        options: options,
         correct_answer: questionData.correctAnswer,
         start_time: new Date(questionData.startTime).toISOString(),
         end_time: new Date(questionData.endTime).toISOString(),
@@ -66,6 +104,8 @@ export const QuestionService = {
     return {
       id: data.id,
       text: data.text,
+      type: data.type || 'text',
+      options: data.options || null,
       correctAnswer: data.correct_answer,
       startTime: data.start_time,
       endTime: data.end_time,
@@ -99,6 +139,8 @@ export const QuestionService = {
     return {
       id: q.id,
       text: q.text,
+      type: q.type || 'text',
+      options: q.options || null,
       correctAnswer: q.correct_answer,
       startTime: q.start_time,
       endTime: q.end_time,
@@ -131,6 +173,8 @@ export const QuestionService = {
     return {
       id: data.id,
       text: data.text,
+      type: data.type || 'text',
+      options: data.options || null,
       correctAnswer: data.correct_answer,
       startTime: data.start_time,
       endTime: data.end_time,
@@ -138,3 +182,5 @@ export const QuestionService = {
     };
   }
 };
+
+

@@ -182,6 +182,32 @@ const AdminPage = () => {
                          إضافة سؤال
                     </h2>
                     <form onSubmit={handleAddQuestion} className="space-y-5">
+                        
+                        {/* Question Type Selector */}
+                        <div>
+                            <label className="block text-sm font-bold text-gray-700 mb-2">نوع السؤال</label>
+                            <div className="flex gap-2 bg-gray-50 p-1 rounded-xl border border-gray-100">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setNewQuestion(prev => ({ ...prev, type: 'text', options: null, correctAnswer: '' }));
+                                    }}
+                                    className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${newQuestion.type === 'text' || !newQuestion.type ? 'bg-white shadow-sm text-primary border border-gray-100' : 'text-gray-400 hover:text-gray-600'}`}
+                                >
+                                    نصي
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setNewQuestion(prev => ({ ...prev, type: 'multiple_choice', options: ['', ''], correctAnswer: '' }));
+                                    }}
+                                    className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${newQuestion.type === 'multiple_choice' ? 'bg-white shadow-sm text-primary border border-gray-100' : 'text-gray-400 hover:text-gray-600'}`}
+                                >
+                                    خيارات متعددة
+                                </button>
+                            </div>
+                        </div>
+
                         <textarea
                             placeholder="نص السؤال"
                             className="w-full p-4 rounded-xl border-2 border-gray-100 focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all font-medium"
@@ -189,14 +215,77 @@ const AdminPage = () => {
                             onChange={e => setNewQuestion({...newQuestion, text: e.target.value})}
                             required
                         />
-                        <input
-                            type="text"
-                            placeholder="الإجابة الصحيحة"
-                            className="w-full p-4 rounded-xl border-2 border-gray-100 focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all font-medium"
-                            value={newQuestion.correctAnswer}
-                            onChange={e => setNewQuestion({...newQuestion, correctAnswer: e.target.value})}
-                            required
-                        />
+
+                        {/* Rendering based on Type */}
+                        {(newQuestion.type === 'multiple_choice') ? (
+                            <div className="space-y-3 animate-fade-in">
+                                <label className="block text-sm font-bold text-gray-700">الخيارات</label>
+                                {newQuestion.options.map((opt, idx) => (
+                                    <div key={idx} className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            placeholder={`الخيار ${idx + 1}`}
+                                            className="flex-1 p-3 rounded-xl border-2 border-gray-100 focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all text-sm"
+                                            value={opt}
+                                            onChange={e => {
+                                                const newOptions = [...newQuestion.options];
+                                                newOptions[idx] = e.target.value;
+                                                setNewQuestion({ ...newQuestion, options: newOptions });
+                                            }}
+                                            required
+                                        />
+                                        {newQuestion.options.length > 2 && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const newOptions = newQuestion.options.filter((_, i) => i !== idx);
+                                                    setNewQuestion(prev => ({
+                                                        ...prev,
+                                                        options: newOptions,
+                                                        correctAnswer: prev.correctAnswer === opt ? '' : prev.correctAnswer
+                                                    }));
+                                                }}
+                                                className="w-10 h-10 flex items-center justify-center rounded-xl bg-red-50 text-red-500 hover:bg-red-100 transition"
+                                            >
+                                                ✕
+                                            </button>
+                                        )}
+                                    </div>
+                                ))}
+                                <button
+                                    type="button"
+                                    onClick={() => setNewQuestion(prev => ({ ...prev, options: [...prev.options, ''] }))}
+                                    className="text-sm text-primary font-bold hover:underline px-2"
+                                >
+                                    + إضافة خيار آخر
+                                </button>
+
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">الإجابة الصحيحة</label>
+                                    <select
+                                        className="w-full p-4 rounded-xl border-2 border-gray-100 focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all font-medium bg-white"
+                                        value={newQuestion.correctAnswer}
+                                        onChange={e => setNewQuestion({...newQuestion, correctAnswer: e.target.value})}
+                                        required
+                                    >
+                                        <option value="" disabled>اختر الإجابة الصحيحة</option>
+                                        {newQuestion.options.filter(o => o.trim().length > 0).map((opt, i) => (
+                                            <option key={i} value={opt}>{opt}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+                        ) : (
+                            <input
+                                type="text"
+                                placeholder="الإجابة الصحيحة"
+                                className="w-full p-4 rounded-xl border-2 border-gray-100 focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all font-medium"
+                                value={newQuestion.correctAnswer}
+                                onChange={e => setNewQuestion({...newQuestion, correctAnswer: e.target.value})}
+                                required
+                            />
+                        )}
+
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-2">وقت البدء</label>
@@ -221,7 +310,8 @@ const AdminPage = () => {
                         </div>
                         <button
                             type="submit"
-                            className="w-full py-4 bg-[#14532D] hover:bg-[#0F3D2E] text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-primary/20 hover:-translate-y-0.5"
+                            className="w-full py-4 bg-[#14532D] hover:bg-[#0F3D2E] text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-primary/20 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={newQuestion.type === 'multiple_choice' && (newQuestion.options.length < 2 || !newQuestion.correctAnswer)}
                         >
                             حفظ السؤال
                         </button>
