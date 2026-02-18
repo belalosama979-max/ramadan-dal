@@ -155,6 +155,17 @@ const QuestionPage = () => {
         return () => clearInterval(timer);
     }, [effectiveQuestion, viewState]);
 
+    // 5. CINEMATIC REVEAL EFFECT
+    const [isRevealing, setIsRevealing] = useState(false);
+
+    useEffect(() => {
+        if (viewState === 'active' && !hasSubmitted) {
+            setIsRevealing(true);
+            const timer = setTimeout(() => setIsRevealing(false), 600);
+            return () => clearTimeout(timer);
+        }
+    }, [viewState, hasSubmitted]);
+
 
     // Helper: Format Time
     const formatTime = (ms) => {
@@ -262,8 +273,13 @@ const QuestionPage = () => {
     const isEnded = viewState === 'ended';
 
     return (
-        <div className="w-full max-w-2xl animate-slide-up text-right">
-            <div className="bg-white rounded-3xl shadow-xl shadow-primary/5 overflow-hidden border border-primary/10">
+        <div className="w-full max-w-2xl animate-slide-up text-right relative">
+             {/* Flash Overlay */}
+             <div 
+                className={`fixed inset-0 bg-white z-50 pointer-events-none transition-opacity duration-500 ease-out ${isRevealing ? 'opacity-100' : 'opacity-0'}`}
+            ></div>
+
+            <div className={`bg-white rounded-3xl shadow-xl shadow-primary/5 overflow-hidden border border-primary/10 transition-all duration-500 ease-out ${isRevealing ? 'scale-95 shadow-2xl' : 'scale-100'}`}>
                 
                 {/* Header */}
                 <div className="bg-gradient-to-r from-primary to-primary-dark p-8 text-white text-center relative overflow-hidden">
