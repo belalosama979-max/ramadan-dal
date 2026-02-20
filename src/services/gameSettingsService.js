@@ -2,49 +2,72 @@ import { supabase } from '../lib/supabaseClient';
 
 /**
  * Game Settings Service
- * Manages the single-row game_settings table.
+ * Manages the single-row game_settings table (UUID primary key).
  * Controls: show_winner toggle, current_question_id tracking.
  */
 
 export const GameSettingsService = {
 
   /**
-   * Get the current game settings (single row, id = 1).
+   * Get the single settings row. Creates one if none exists.
+   * Returns: { id, showWinner, currentQuestionId }
    */
   getSettings: async () => {
     const { data, error } = await supabase
       .from('game_settings')
       .select('*')
-      .eq('id', 1)
+      .limit(1)
       .single();
 
-    if (error) {
-      console.error('Error fetching game settings:', error);
-      return { showWinner: false, currentQuestionId: null };
+    // Row exists — return it
+    if (data && !error) {
+      return {
+        id: data.id,
+        showWinner: data.show_winner ?? false,
+        currentQuestionId: data.current_question_id ?? null,
+      };
+    }
+
+    // No row found — create the initial one
+    const { data: created, error: insertError } = await supabase
+      .from('game_settings')
+      .insert([{ show_winner: false, current_question_id: null }])
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error('Error creating game settings:', insertError);
+      return { id: null, showWinner: false, currentQuestionId: null };
     }
 
     return {
-      showWinner: data.show_winner ?? false,
-      currentQuestionId: data.current_question_id ?? null,
+      id: created.id,
+      showWinner: false,
+      currentQuestionId: null,
     };
   },
 
   /**
    * Toggle the show_winner flag.
+   * Fetches real UUID first, then updates by that UUID.
    */
   toggleShowWinner: async (currentValue) => {
+    const settings = await GameSettingsService.getSettings();
+    if (!settings.id) throw new Error('No game settings row found');
+
+    const newValue = !currentValue;
+
     const { error } = await supabase
       .from('game_settings')
-      .update({ show_winner: !currentValue })
-   .update({ show_winner: newValue })
-.not('id', 'is', null)
+      .update({ show_winner: newValue })
+      .eq('id', settings.id);
 
     if (error) {
       console.error('Error toggling show_winner:', error);
       throw error;
     }
 
-    return !currentValue;
+    return newValue;
   },
 
   /**
@@ -52,22 +75,16 @@ export const GameSettingsService = {
    * Called when admin creates a new question.
    */
   setCurrentQuestion: async (questionId) => {
+    const settings = await GameSettingsService.getSettings();
+    if (!settings.id) return;
+
     const { error } = await supabase
       .from('game_settings')
       .update({
         current_question_id: questionId,
         show_winner: false,
       })
-     getSettings: async () => {
-  const { data, error } = await supabase
-    .from('game_settings')
-    .select('*')
-    .limit(1)
-    .single();
-
-  if (error) throw error;
-  return data;
-}
+      .eq('id', settings.id);
 
     if (error) {
       console.error('Error setting current question:', error);
