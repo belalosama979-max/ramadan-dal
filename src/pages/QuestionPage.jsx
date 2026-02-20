@@ -51,6 +51,10 @@ const QuestionPage = () => {
     const [submissionMessage, setSubmissionMessage] = useState('');
     const [hasSubmitted, setHasSubmitted] = useState(false);
 
+    // Feedback State (post-question)
+    const [feedbackResult, setFeedbackResult] = useState(null); // 'correct', 'incorrect', 'none'
+    const [feedbackLoading, setFeedbackLoading] = useState(false);
+
     // Determines the question object to use (Context takes precedence if active, otherwise local)
     const effectiveQuestion = contextActiveQuestion || localQuestion;
 
@@ -116,6 +120,33 @@ const QuestionPage = () => {
             });
         }
     }, [effectiveQuestion, user, navigate, viewState]);
+
+
+    // 3.5 FETCH FEEDBACK WHEN ENDED
+    useEffect(() => {
+        if (viewState !== 'ended' || !effectiveQuestion || !user) return;
+
+        const fetchFeedback = async () => {
+            setFeedbackLoading(true);
+            try {
+                const submission = await SubmissionService.getUserSubmission(effectiveQuestion.id, user);
+                if (!submission) {
+                    setFeedbackResult('none');
+                } else if (submission.isCorrect) {
+                    setFeedbackResult('correct');
+                } else {
+                    setFeedbackResult('incorrect');
+                }
+            } catch (err) {
+                console.error('Error fetching feedback:', err);
+                setFeedbackResult('none');
+            } finally {
+                setFeedbackLoading(false);
+            }
+        };
+
+        fetchFeedback();
+    }, [viewState, effectiveQuestion, user]);
 
 
     // 4. PREMIUM COUNTDOWN ENGINE
@@ -305,7 +336,41 @@ const QuestionPage = () => {
                 </div>
 
                 <div className="p-8">
-                    {hasSubmitted ? (
+                    {isEnded ? (
+                        /* POST-QUESTION FEEDBACK CARD */
+                        <div className="text-center animate-fade-in py-8">
+                            {feedbackLoading ? (
+                                <div className="flex flex-col items-center gap-4">
+                                    <div className="w-12 h-12 border-4 border-gray-200 border-t-primary rounded-full animate-spin"></div>
+                                    <p className="text-gray-500 font-medium">جاري التحقق...</p>
+                                </div>
+                            ) : feedbackResult === 'correct' ? (
+                                <div className="p-8 rounded-2xl border-2 border-green-200" style={{ background: 'linear-gradient(135deg, #f0fdf4, #dcfce7)' }}>
+                                    <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-5 shadow-lg shadow-green-200">
+                                        <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7"></path></svg>
+                                    </div>
+                                    <h3 className="text-2xl font-bold text-green-800 mb-2">إجابتك صحيحة ✅</h3>
+                                    <p className="text-green-600 font-medium">أحسنت يا {user}! بارك الله فيك.</p>
+                                </div>
+                            ) : feedbackResult === 'incorrect' ? (
+                                <div className="p-8 rounded-2xl border-2 border-red-200" style={{ background: 'linear-gradient(135deg, #fef2f2, #fecaca)' }}>
+                                    <div className="w-20 h-20 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-5 shadow-lg shadow-red-200">
+                                        <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                    </div>
+                                    <h3 className="text-2xl font-bold text-red-800 mb-2">إجابتك غير صحيحة ❌</h3>
+                                    <p className="text-red-600 font-medium">لا بأس يا {user}، حاول في السؤال القادم!</p>
+                                </div>
+                            ) : (
+                                <div className="p-8 rounded-2xl border-2 border-gray-200" style={{ background: 'linear-gradient(135deg, #f9fafb, #f3f4f6)' }}>
+                                    <div className="w-20 h-20 bg-gray-100 text-gray-400 rounded-full flex items-center justify-center mx-auto mb-5 shadow-lg shadow-gray-200">
+                                        <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    </div>
+                                    <h3 className="text-2xl font-bold text-gray-600 mb-2">لم تقم بإرسال إجابة</h3>
+                                    <p className="text-gray-500 font-medium">حظاً موفقاً في السؤال القادم!</p>
+                                </div>
+                            )}
+                        </div>
+                    ) : hasSubmitted ? (
                         <div className="text-center animate-fade-in py-8">
                             <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
@@ -313,12 +378,6 @@ const QuestionPage = () => {
                             <h3 className="text-xl font-bold text-gray-800 mb-2">شكراً {user}!</h3>
                             <p className="text-gray-600">تم تسجيل إجابتك. سيتم الإعلان عن الفائز قريباً.</p>
                         </div>
-                    ) : isEnded ? (
-                         <div className="text-center py-8">
-                            <div className="text-4xl mb-4">🏁</div>
-                             <p className="text-xl font-bold text-gray-500">للأسف، انتهى وقت الإجابة.</p>
-                             <p className="text-gray-400 text-sm">حظاً موفقاً في السؤال القادم!</p>
-                         </div>
                     ) : (
                         <form onSubmit={handleSubmit} className="space-y-8">
                             <div>

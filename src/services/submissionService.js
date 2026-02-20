@@ -91,6 +91,29 @@ export const SubmissionService = {
       }
       
       return count > 0;
+  },
+
+  /**
+   * Get a specific user's submission for a question.
+   * Returns the submission with isCorrect, or null if not found.
+   */
+  getUserSubmission: async (questionId, userName) => {
+      if (!questionId || !userName) return null;
+      const normalized = userName.trim().toLowerCase();
+
+      const { data, error } = await supabase
+        .from('submissions')
+        .select('*')
+        .eq('question_id', questionId)
+        .eq('normalized_name', normalized)
+        .maybeSingle();
+
+      if (error) {
+          console.error("Error fetching user submission:", error);
+          return null;
+      }
+
+      return data ? mapSubmission(data) : null;
   }
 };
 
