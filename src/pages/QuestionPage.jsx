@@ -54,6 +54,10 @@ const QuestionPage = () => {
     const [timeLeft, setTimeLeft] = useState(0);
     const [dynamicMessage, setDynamicMessage] = useState("");
 
+    // Personal timer state
+    const [personalEndTime, setPersonalEndTime] = useState(null);
+    const [personalTimerExpired, setPersonalTimerExpired] = useState(false);
+
     // Form State
     const [answer, setAnswer] = useState('');
     const [submissionStatus, setSubmissionStatus] = useState('idle'); // idle, submitting, submitted, error
@@ -170,6 +174,39 @@ const QuestionPage = () => {
     }, [effectiveQuestion, user, navigate, viewState]);
 
 
+    // 3.2 INIT PERSONAL TIMER — runs once when user first sees active question
+    const personalTimerInitRef = React.useRef(null); // tracks which question we've inited
+    useEffect(() => {
+        if (viewState !== 'active' || !effectiveQuestion || !user) return;
+        // Guard: don't re-init for the same question
+        if (personalTimerInitRef.current === effectiveQuestion.id) return;
+        personalTimerInitRef.current = effectiveQuestion.id;
+
+        const initTimer = async () => {
+            try {
+                const timer = await SubmissionService.getOrCreatePersonalTimer(
+                    effectiveQuestion.id,
+                    user,
+                    effectiveQuestion.endTime
+                );
+                if (timer) {
+                    setPersonalEndTime(timer.personalEndTime);
+                    // Check if already expired on load
+                    if (new Date() >= new Date(timer.personalEndTime)) {
+                        setPersonalTimerExpired(true);
+                    }
+                }
+            } catch (err) {
+                console.error('Error initializing personal timer:', err);
+                // If timer creation fails (e.g., global window ended), mark expired
+                setPersonalTimerExpired(true);
+            }
+        };
+
+        initTimer();
+    }, [viewState, effectiveQuestion?.id, user]);
+
+
     // 3.5 FETCH FEEDBACK WHEN ENDED
     useEffect(() => {
         if (viewState !== 'ended' || !effectiveQuestion || !user) return;
@@ -232,8 +269,10 @@ const QuestionPage = () => {
     }, [showWinner, currentQuestionId]);
 
     // 4. PREMIUM COUNTDOWN ENGINE
-    // Dependencies include endTime so the interval re-creates cleanly on time edits
-    const effectiveEndTime = effectiveQuestion?.endTime;
+    // Uses personalEndTime for active countdown (falls back to global)
+    const countdownEndTime = (viewState === 'active' && personalEndTime)
+        ? personalEndTime
+        : effectiveQuestion?.endTime;
     const effectiveStartTime = effectiveQuestion?.startTime;
 
     useEffect(() => {
@@ -241,7 +280,7 @@ const QuestionPage = () => {
 
         const targetDate = viewState === 'upcoming' 
             ? new Date(effectiveStartTime) 
-            : new Date(effectiveEndTime);
+            : new Date(countdownEndTime);
 
         // Initial set
         const now = new Date();
@@ -259,7 +298,9 @@ const QuestionPage = () => {
                 if (viewState === 'upcoming') {
                     setViewState('active');
                 } else if (viewState === 'active') {
-                    setViewState('ended');
+                    // Personal timer expired — mark expired but don't switch to 'ended'
+                    // (global question may still be active; 'ended' state triggers feedback fetch)
+                    setPersonalTimerExpired(true);
                 }
             } else {
                 setTimeLeft(diff);
@@ -267,7 +308,7 @@ const QuestionPage = () => {
         }, 1000);
 
         return () => clearInterval(timer);
-    }, [effectiveEndTime, effectiveStartTime, viewState]);
+    }, [countdownEndTime, effectiveStartTime, viewState]);
 
     // 5. CINEMATIC REVEAL EFFECT
     const [isRevealing, setIsRevealing] = useState(false);
@@ -302,7 +343,7 @@ const QuestionPage = () => {
     // 5. SUBMISSION HANDLER
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!answer.trim() || !effectiveQuestion) return;
+        if (!answer.trim() || !effectiveQuestion || personalTimerExpired) return;
 
         setSubmissionStatus('submitting');
 
@@ -409,6 +450,7 @@ const QuestionPage = () => {
 
     // ACTIVE & ENDED STATE UI
     const isEnded = viewState === 'ended';
+    const isPersonallyExpired = personalTimerExpired && viewState === 'active';
 
     return (
         <div className="w-full max-w-2xl animate-slide-up text-right relative">
@@ -428,9 +470,9 @@ const QuestionPage = () => {
                     <div className="absolute inset-0 opacity-10"></div>
                     
                     {/* Active Timer Badge */}
-                    <div className={`inline-flex items-center gap-2 px-4 py-1 rounded-full mb-4 text-sm font-bold tracking-wider ${isEnded ? 'bg-red-500/20 text-red-100' : 'bg-white/20 text-yellow-300'}`}>
-                        <span>{isEnded ? 'انتهى الوقت' : 'الوقت المتبقي'}</span>
-                        <span className="font-mono text-lg" dir="ltr">{isEnded ? '00:00:00' : formatTime(timeLeft)}</span>
+                    <div className={`inline-flex items-center gap-2 px-4 py-1 rounded-full mb-4 text-sm font-bold tracking-wider ${(isEnded || isPersonallyExpired) ? 'bg-red-500/20 text-red-100' : 'bg-white/20 text-yellow-300'}`}>
+                        <span>{(isEnded || isPersonallyExpired) ? 'انتهى الوقت' : 'الوقت المتبقي'}</span>
+                        <span className="font-mono text-lg" dir="ltr">{(isEnded || isPersonallyExpired) ? '00:00:00' : formatTime(timeLeft)}</span>
                     </div>
 
                     <h3 className="text-lg font-medium opacity-90 relative z-10 text-primary-light mb-2">سؤال اليوم</h3>
@@ -445,8 +487,25 @@ const QuestionPage = () => {
                 </div>
 
                 <div className="p-8">
-                    {isEnded ? (
-                        /* POST-QUESTION FEEDBACK CARD */
+                    {(isEnded || isPersonallyExpired) ? (
+                        /* POST-QUESTION / PERSONAL TIMER EXPIRED CARD */
+                        isPersonallyExpired && !isEnded ? (
+                            /* Personal timer expired but global still active */
+                            <div className="text-center animate-fade-in py-8">
+                                <div className="p-8 rounded-2xl border-2 border-amber-200" style={{ background: 'linear-gradient(135deg, #fffbeb, #fef3c7)' }}>
+                                    <div className="w-20 h-20 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-5 shadow-lg shadow-amber-200">
+                                        <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    </div>
+                                    <h3 className="text-2xl font-bold text-amber-800 mb-2">انتهى وقتك الشخصي ⏰</h3>
+                                    {hasSubmitted ? (
+                                        <p className="text-amber-600 font-medium">تم تسجيل إجابتك بنجاح. سيتم الإعلان عن الفائز قريباً.</p>
+                                    ) : (
+                                        <p className="text-amber-600 font-medium">لم تقم بإرسال إجابة خلال الوقت المحدد.</p>
+                                    )}
+                                </div>
+                            </div>
+                        ) : (
+                        /* Global question ended — show feedback */
                         <div className="text-center animate-fade-in py-8">
                             {feedbackLoading ? (
                                 <div className="flex flex-col items-center gap-4">
@@ -491,6 +550,7 @@ const QuestionPage = () => {
                                 </div>
                             )}
                         </div>
+                        )
                     ) : hasSubmitted ? (
                         <div className="text-center animate-fade-in py-8">
                             <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -548,7 +608,7 @@ const QuestionPage = () => {
 
                             <button
                                 type="submit"
-                                disabled={submissionStatus === 'submitting' || !answer.trim()}
+                                disabled={submissionStatus === 'submitting' || !answer.trim() || personalTimerExpired}
                                 className={`w-full py-5 text-xl font-bold rounded-2xl transition-all duration-200 shadow-md 
                                     ${submissionStatus === 'submitting' || !answer.trim()
                                         ? 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none' 
@@ -562,9 +622,9 @@ const QuestionPage = () => {
                 
                 <div className="bg-gray-50 px-6 py-4 border-t border-gray-100 flex justify-between items-center text-sm text-gray-500">
                     <span>
-                        {isEnded 
-                            ? `انتهى في: ${new Date(effectiveQuestion.endTime).toLocaleTimeString('ar-SA')}`
-                            : `يغلق في: ${new Date(effectiveQuestion.endTime).toLocaleTimeString('ar-SA')}`
+                        {(isEnded || isPersonallyExpired)
+                            ? `انتهى في: ${new Date(personalEndTime || effectiveQuestion.endTime).toLocaleTimeString('ar-SA')}`
+                            : `يغلق في: ${new Date(personalEndTime || effectiveQuestion.endTime).toLocaleTimeString('ar-SA')}`
                         }
                     </span>
                     <span>بالتوفيق!</span>

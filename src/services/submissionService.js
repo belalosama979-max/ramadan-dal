@@ -38,10 +38,11 @@ export const SubmissionService = {
         throw new Error("Invalid submission data.");
     }
 
-    // 1. Check if question is still active (Client-side validation using passed object)
+    // 1. Check personal timer first, fall back to global end_time
     const now = new Date();
-    const end = new Date(question.endTime);
-    if (now > end) {
+    const timer = await SubmissionService.getPersonalTimer(question.id, user);
+    const deadline = timer ? new Date(timer.personalEndTime) : new Date(question.endTime);
+    if (now > deadline) {
         throw new Error("انتهى وقت الإجابة على هذا السؤال.");
     }
 
@@ -132,6 +133,98 @@ export const SubmissionService = {
       if (error) {
           console.error('Error marking result as viewed:', error);
       }
+  },
+
+  // ===== PERSONAL TIMER FUNCTIONS =====
+
+  /**
+   * Get or create a personal timer for a user on a specific question.
+   * - First call: creates timer row (personal_start_time = now, personal_end_time = min(now + 2min, question.endTime))
+   * - Subsequent calls (refresh/second device): returns existing row unchanged.
+   * - Throws if global window has already ended.
+   */
+  getOrCreatePersonalTimer: async (questionId, userName, questionEndTime) => {
+      if (!questionId || !userName || !questionEndTime) return null;
+      const normalized = userName.trim().toLowerCase();
+
+      // Safety: prevent creating timer after global window ended
+      const now = new Date();
+      const globalEnd = new Date(questionEndTime);
+      if (now > globalEnd) {
+          throw new Error("لا يمكن بدء المؤقت بعد انتهاء وقت السؤال.");
+      }
+
+      // Check if timer already exists (handles refresh / second device)
+      const { data: existing, error: fetchError } = await supabase
+        .from('personal_timers')
+        .select('*')
+        .eq('question_id', questionId)
+        .eq('normalized_name', normalized)
+        .maybeSingle();
+
+      if (fetchError) {
+          console.error('Error fetching personal timer:', fetchError);
+          return null;
+      }
+
+      if (existing) {
+          return mapPersonalTimer(existing);
+      }
+
+      // Create new timer: 2 minutes from now, capped by global end_time
+      const PERSONAL_DURATION_MS = 2 * 60 * 1000; // 2 minutes
+      const personalEnd = new Date(Math.min(now.getTime() + PERSONAL_DURATION_MS, globalEnd.getTime()));
+
+      const { data: inserted, error: insertError } = await supabase
+        .from('personal_timers')
+        .insert([{
+            question_id: questionId,
+            normalized_name: normalized,
+            personal_start_time: now.toISOString(),
+            personal_end_time: personalEnd.toISOString(),
+        }])
+        .select()
+        .single();
+
+      // Handle race condition: if another tab inserted between our check and insert
+      if (insertError) {
+          if (insertError.code === '23505') { // unique_violation
+              // Another tab/device just created it — fetch and return
+              const { data: raceData } = await supabase
+                .from('personal_timers')
+                .select('*')
+                .eq('question_id', questionId)
+                .eq('normalized_name', normalized)
+                .maybeSingle();
+              return raceData ? mapPersonalTimer(raceData) : null;
+          }
+          console.error('Error creating personal timer:', insertError);
+          return null;
+      }
+
+      return mapPersonalTimer(inserted);
+  },
+
+  /**
+   * Get existing personal timer (read-only). Returns null if none exists.
+   */
+  getPersonalTimer: async (questionId, userName) => {
+      if (!questionId || !userName) return null;
+      const normalized = userName.trim().toLowerCase();
+
+      const { data, error } = await supabase
+        .from('personal_timers')
+        .select('*')
+        .eq('question_id', questionId)
+        .eq('normalized_name', normalized)
+        .maybeSingle();
+
+      if (error) {
+          console.error('Error fetching personal timer:', error);
+          return null;
+      }
+
+      return data ? mapPersonalTimer(data) : null;
   }
 };
 
@@ -145,4 +238,13 @@ const mapSubmission = (s) => ({
     isCorrect: s.is_correct,
     resultViewed: s.result_viewed ?? false,
     submittedAt: s.submitted_at
+});
+
+// Helper to map personal_timers row
+const mapPersonalTimer = (t) => ({
+    id: t.id,
+    questionId: t.question_id,
+    normalizedName: t.normalized_name,
+    personalStartTime: t.personal_start_time,
+    personalEndTime: t.personal_end_time,
 });
