@@ -9,7 +9,7 @@ const AdminPage = () => {
     const [questions, setQuestions] = useState([]);
     const [selectedQuestionId, setSelectedQuestionId] = useState(null);
     const [submissions, setSubmissions] = useState([]);
-    const [newQuestion, setNewQuestion] = useState({ text: '', correctAnswer: '', startTime: '', endTime: '' });
+    const [newQuestion, setNewQuestion] = useState({ text: '', correctAnswer: '', startTime: '', endTime: '', personalDurationSeconds: 120 });
     const [showWinner, setShowWinner] = useState(false);
     const [winnerToggleLoading, setWinnerToggleLoading] = useState(false);
 
@@ -95,10 +95,22 @@ const AdminPage = () => {
         
         try {
             // Strictly use ISO string from local input (browser handles local -> UTC conversion)
+            const startDate = new Date(newQuestion.startTime);
+            const endDate = new Date(newQuestion.endTime);
+            
+            const pDuration = parseInt(newQuestion.personalDurationSeconds, 10);
+            if (!pDuration || pDuration <= 0) {
+                throw new Error("مدة المشارك يجب أن تكون أكبر من صفر");
+            }
+            if (pDuration * 1000 > (endDate.getTime() - startDate.getTime())) {
+                throw new Error("مدة المشارك لا يمكن أن تتجاوز مدة السؤال الكلية");
+            }
+
             const questionData = {
                 ...newQuestion,
-                startTime: new Date(newQuestion.startTime).toISOString(),
-                endTime: new Date(newQuestion.endTime).toISOString()
+                startTime: startDate.toISOString(),
+                endTime: endDate.toISOString(),
+                personalDurationSeconds: pDuration
             };
             
             await QuestionService.add(questionData);
@@ -107,7 +119,7 @@ const AdminPage = () => {
             await GameSettingsService.setCurrentQuestion(null); // Will be set when question ends
             setShowWinner(false);
             
-            setNewQuestion({ text: '', correctAnswer: '', startTime: '', endTime: '' });
+            setNewQuestion({ text: '', correctAnswer: '', startTime: '', endTime: '', personalDurationSeconds: 120 });
             await refreshData();
             alert('تم إضافة السؤال بنجاح');
         } catch (error) {
@@ -376,6 +388,18 @@ const AdminPage = () => {
                                     className="w-full p-3 rounded-xl border-2 border-gray-100 focus:border-primary transition-colors text-sm"
                                     value={newQuestion.endTime}
                                     onChange={e => setNewQuestion({...newQuestion, endTime: e.target.value})}
+                                    required
+                                />
+                            </div>
+                            <div className="col-span-2">
+                                <label className="block text-sm font-bold text-gray-700 mb-2">مدة كل مشارك (بالثواني)</label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    max="3600"
+                                    className="w-full p-3 rounded-xl border-2 border-gray-100 focus:border-primary transition-colors text-sm font-mono"
+                                    value={newQuestion.personalDurationSeconds}
+                                    onChange={e => setNewQuestion({...newQuestion, personalDurationSeconds: e.target.value})}
                                     required
                                 />
                             </div>

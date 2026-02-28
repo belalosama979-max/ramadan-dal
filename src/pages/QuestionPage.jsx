@@ -187,7 +187,8 @@ const QuestionPage = () => {
                 const timer = await SubmissionService.getOrCreatePersonalTimer(
                     effectiveQuestion.id,
                     user,
-                    effectiveQuestion.endTime
+                    effectiveQuestion.endTime,
+                    effectiveQuestion.personalDurationSeconds || 120
                 );
                 if (timer) {
                     setPersonalEndTime(timer.personalEndTime);

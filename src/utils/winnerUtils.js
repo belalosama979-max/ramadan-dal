@@ -16,9 +16,23 @@ export const calculateWinner = (submissions) => {
 
     if (correctSubmissions.length === 0) return null;
 
-    // 2. Sort by timestamp (Earliest first)
+    // 2. Sort by responseTimeSeconds -> submittedAt -> id
     correctSubmissions.sort((a, b) => {
-        return new Date(a.submittedAt) - new Date(b.submittedAt);
+        const timeA = a.responseTimeSeconds ?? Infinity;
+        const timeB = b.responseTimeSeconds ?? Infinity;
+        
+        if (timeA !== timeB) {
+            return timeA - timeB;
+        }
+
+        const dateA = new Date(a.submittedAt).getTime();
+        const dateB = new Date(b.submittedAt).getTime();
+        
+        if (dateA !== dateB) {
+            return dateA - dateB;
+        }
+
+        return a.id.localeCompare(b.id);
     });
 
     // 3. Return the winner

@@ -31,6 +31,7 @@ export const QuestionService = {
       correctAnswer: q.correct_answer,
       startTime: q.start_time,
       endTime: q.end_time,
+      personalDurationSeconds: q.personal_duration_seconds || 120,
       createdAt: q.created_at
     }));
   },
@@ -43,7 +44,8 @@ export const QuestionService = {
       !questionData.text ||
       !questionData.correctAnswer ||
       !questionData.startTime ||
-      !questionData.endTime
+      !questionData.endTime ||
+      !questionData.personalDurationSeconds
     ) {
       throw new Error("Missing required question fields.");
     }
@@ -95,6 +97,7 @@ export const QuestionService = {
         correct_answer: questionData.correctAnswer,
         start_time: new Date(questionData.startTime).toISOString(),
         end_time: new Date(questionData.endTime).toISOString(),
+        personal_duration_seconds: parseInt(questionData.personalDurationSeconds, 10),
       }])
       .select()
       .single();
@@ -144,6 +147,7 @@ export const QuestionService = {
       correctAnswer: q.correct_answer,
       startTime: q.start_time,
       endTime: q.end_time,
+      personalDurationSeconds: q.personal_duration_seconds || 120,
       createdAt: q.created_at
     };
   },
@@ -243,6 +247,7 @@ export const QuestionService = {
       correctAnswer: data.correct_answer,
       startTime: data.start_time,
       endTime: data.end_time,
+      personalDurationSeconds: data.personal_duration_seconds || 120,
       createdAt: data.created_at
     };
   }

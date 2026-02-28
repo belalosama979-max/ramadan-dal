@@ -46,6 +46,9 @@ export const SubmissionService = {
         throw new Error("انتهى وقت الإجابة على هذا السؤال.");
     }
 
+    const personalStart = timer ? new Date(timer.personalStartTime) : new Date(question.startTime);
+    const responseTimeSeconds = Math.floor((now.getTime() - personalStart.getTime()) / 1000);
+
     // 2. Normalize Name
     const normalizedName = user.trim().toLowerCase();
 
@@ -67,6 +70,7 @@ export const SubmissionService = {
             normalized_name: normalizedName,
             answer: answer.trim(),
             is_correct: isCorrect,
+            response_time_seconds: Math.max(0, responseTimeSeconds),
             // id and submitted_at handled by DB
         }])
         .select()
@@ -139,11 +143,8 @@ export const SubmissionService = {
 
   /**
    * Get or create a personal timer for a user on a specific question.
-   * - First call: creates timer row (personal_start_time = now, personal_end_time = min(now + 2min, question.endTime))
-   * - Subsequent calls (refresh/second device): returns existing row unchanged.
-   * - Throws if global window has already ended.
    */
-  getOrCreatePersonalTimer: async (questionId, userName, questionEndTime) => {
+  getOrCreatePersonalTimer: async (questionId, userName, questionEndTime, personalDurationSeconds = 120) => {
       if (!questionId || !userName || !questionEndTime) return null;
       const normalized = userName.trim().toLowerCase();
 
@@ -171,9 +172,9 @@ export const SubmissionService = {
           return mapPersonalTimer(existing);
       }
 
-      // Create new timer: 2 minutes from now, capped by global end_time
-      const PERSONAL_DURATION_MS = 2 * 60 * 1000; // 2 minutes
-      const personalEnd = new Date(Math.min(now.getTime() + PERSONAL_DURATION_MS, globalEnd.getTime()));
+      // Create new timer: capped by global end_time
+      const durationMs = (personalDurationSeconds || 120) * 1000;
+      const personalEnd = new Date(Math.min(now.getTime() + durationMs, globalEnd.getTime()));
 
       const { data: inserted, error: insertError } = await supabase
         .from('personal_timers')
@@ -236,6 +237,7 @@ const mapSubmission = (s) => ({
     normalizedName: s.normalized_name,
     answer: s.answer,
     isCorrect: s.is_correct,
+    responseTimeSeconds: s.response_time_seconds,
     resultViewed: s.result_viewed ?? false,
     submittedAt: s.submitted_at
 });
