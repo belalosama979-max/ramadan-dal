@@ -612,17 +612,57 @@ const QuestionPage = () => {
                             <p className="text-gray-600">تم تسجيل إجابتك. سيتم الإعلان عن الفائز قريباً.</p>
                         </div>
                     ) : readingCountdown > 0 ? (
-                        /* READING LOCKOUT BANNER — first 10 seconds */
-                        <div className="text-center animate-fade-in py-8">
-                            <div className="p-8 rounded-2xl border-2 border-blue-200" style={{ background: 'linear-gradient(135deg, #eff6ff, #dbeafe)' }}>
+                        /* READING LOCKOUT — show options but locked */
+                        <div className="space-y-6 animate-fade-in">
+                            {/* Countdown pill */}
+                            <div className="flex items-center justify-center gap-3 p-3 rounded-2xl border-2 border-blue-200" style={{ background: 'linear-gradient(135deg, #eff6ff, #dbeafe)' }}>
                                 <div
-                                    className="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-5 shadow-lg shadow-blue-200 text-5xl font-black text-blue-700"
-                                    style={{ background: 'linear-gradient(135deg, #bfdbfe, #93c5fd)' }}
+                                    className="w-10 h-10 rounded-full flex items-center justify-center text-xl font-black text-white shadow-md"
+                                    style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)' }}
                                 >
                                     {readingCountdown}
                                 </div>
-                                <h3 className="text-2xl font-bold text-blue-800 mb-2">اقرأ السؤال جيداً 📖</h3>
-                                <p className="text-blue-600 font-medium">ستتمكن من الإجابة بعد {readingCountdown} ثانية</p>
+                                <div className="text-right">
+                                    <p className="text-blue-800 font-bold text-sm">اقرأ السؤال والخيارات جيداً 📖</p>
+                                    <p className="text-blue-500 text-xs">تفتح الإجابة بعد {readingCountdown} ثانية</p>
+                                </div>
+                            </div>
+
+                            {/* Locked form — visible but not interactive */}
+                            <div className="space-y-6 opacity-50 pointer-events-none select-none">
+                                <label className="block text-primary-dark font-bold text-lg mb-4">إجابتك:</label>
+                                {effectiveQuestion.type === 'multiple_choice' && effectiveQuestion.options ? (
+                                    <div className="space-y-3">
+                                        {effectiveQuestion.options.map((option, idx) => (
+                                            <label
+                                                key={idx}
+                                                className="flex items-center gap-4 p-4 rounded-xl border-2 border-gray-100 bg-gray-50 cursor-not-allowed"
+                                            >
+                                                <input
+                                                    type="radio"
+                                                    name="mcq-answer-locked"
+                                                    value={option}
+                                                    disabled
+                                                    className="w-5 h-5 accent-primary"
+                                                />
+                                                <span className="text-lg font-medium text-gray-700">{option}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <textarea
+                                        className="w-full p-5 rounded-2xl border-2 border-gray-100 bg-gray-50 text-lg resize-none shadow-inner cursor-not-allowed"
+                                        rows="4"
+                                        placeholder="اكتب الإجابة هنا..."
+                                        disabled
+                                    />
+                                )}
+                                <button
+                                    disabled
+                                    className="w-full py-5 text-xl font-bold rounded-2xl bg-gray-200 text-gray-400 cursor-not-allowed shadow-none"
+                                >
+                                    إرسال الإجابة
+                                </button>
                             </div>
                         </div>
                     ) : (
