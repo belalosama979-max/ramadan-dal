@@ -58,6 +58,9 @@ const QuestionPage = () => {
     const [personalEndTime, setPersonalEndTime] = useState(null);
     const [personalTimerExpired, setPersonalTimerExpired] = useState(false);
 
+    // Reading Lockout (10 seconds after question becomes active)
+    const [readingCountdown, setReadingCountdown] = useState(0); // 0 = unlocked
+
     // Form State
     const [answer, setAnswer] = useState('');
     const [submissionStatus, setSubmissionStatus] = useState('idle'); // idle, submitting, submitted, error
@@ -321,6 +324,24 @@ const QuestionPage = () => {
             return () => clearTimeout(timer);
         }
     }, [viewState, hasSubmitted]);
+
+    // 5.1 READING LOCKOUT — 10s after question becomes active
+    const readingInitRef = React.useRef(null);
+    useEffect(() => {
+        if (viewState !== 'active' || !effectiveQuestion) return;
+        // Guard: only start once per question
+        if (readingInitRef.current === effectiveQuestion.id) return;
+        readingInitRef.current = effectiveQuestion.id;
+
+        setReadingCountdown(10);
+        let count = 10;
+        const tick = setInterval(() => {
+            count -= 1;
+            setReadingCountdown(count);
+            if (count <= 0) clearInterval(tick);
+        }, 1000);
+        return () => clearInterval(tick);
+    }, [viewState, effectiveQuestion?.id]);
 
 
     // Helper: Format Time
@@ -589,6 +610,20 @@ const QuestionPage = () => {
                             </div>
                             <h3 className="text-xl font-bold text-gray-800 mb-2">شكراً {user}!</h3>
                             <p className="text-gray-600">تم تسجيل إجابتك. سيتم الإعلان عن الفائز قريباً.</p>
+                        </div>
+                    ) : readingCountdown > 0 ? (
+                        /* READING LOCKOUT BANNER — first 10 seconds */
+                        <div className="text-center animate-fade-in py-8">
+                            <div className="p-8 rounded-2xl border-2 border-blue-200" style={{ background: 'linear-gradient(135deg, #eff6ff, #dbeafe)' }}>
+                                <div
+                                    className="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-5 shadow-lg shadow-blue-200 text-5xl font-black text-blue-700"
+                                    style={{ background: 'linear-gradient(135deg, #bfdbfe, #93c5fd)' }}
+                                >
+                                    {readingCountdown}
+                                </div>
+                                <h3 className="text-2xl font-bold text-blue-800 mb-2">اقرأ السؤال جيداً 📖</h3>
+                                <p className="text-blue-600 font-medium">ستتمكن من الإجابة بعد {readingCountdown} ثانية</p>
+                            </div>
                         </div>
                     ) : (
                         <form onSubmit={handleSubmit} className="space-y-8">
